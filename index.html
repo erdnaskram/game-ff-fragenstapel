@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fragenstapel · Reise-Edition</title>
+<meta name="theme-color" content="#16233A">
+<meta name="description" content="Kartenstapel-Ersatz für Fun Facts – nur Täfelchen und Stifte einpacken.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fragenstapel">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+  :root {
+    --navy: #16233A;
+    --navy-deep: #0D1626;
+    --paper: #F4EFE4;
+    --paper-warm: #EAE2D0;
+    --stamp: #B84A3E;
+    --gold: #C79A3D;
+    --ink-soft: #5B6472;
+    --tag-yellow: #F5C518;
+
+    /* Shell-Theme: steuert nur Hintergrund/Bedienelemente außerhalb der Karte/des Popups */
+    --shell-bg: var(--navy);
+    --shell-text: var(--paper);
+    --shell-text-soft: rgba(244,239,228,0.6);
+    --shell-text-faint: rgba(244,239,228,0.32);
+    --shell-surface: rgba(244,239,228,0.08);
+    --shell-border: rgba(244,239,228,0.18);
+    --shell-grad1: rgba(199,154,61,0.08);
+    --shell-grad2: rgba(184,74,62,0.10);
+  }
+
+  body.light-theme {
+    --shell-bg: #F4EFE4;
+    --shell-text: #16233A;
+    --shell-text-soft: rgba(22,35,58,0.55);
+    --shell-text-faint: rgba(22,35,58,0.35);
+    --shell-surface: rgba(22,35,58,0.06);
+    --shell-border: rgba(22,35,58,0.15);
+    --shell-grad1: rgba(199,154,61,0.12);
+    --shell-grad2: rgba(184,74,62,0.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  .hidden { display: none !important; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--shell-bg);
+    background-image:
+      radial-gradient(circle at 15% 20%, var(--shell-grad1), transparent 40%),
+      radial-gradient(circle at 85% 80%, var(--shell-grad2), transparent 45%);
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--shell-text);
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 60px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .app { width: 100%; max-width: 460px; }
+
+  header { text-align: center; margin-bottom: 28px; }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 30px;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--shell-text-soft);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* --- The card / postcard stack --- */
+  .stack-wrap {
+    position: relative;
+    height: 260px;
+    margin: 30px 0 20px;
+  }
+
+  .ghost-card {
+    position: absolute;
+    inset: 0;
+    background: var(--paper-warm);
+    border-radius: 14px;
+    border: 1px solid rgba(22,35,58,0.08);
+  }
+  .ghost-card.g1 { transform: rotate(-4deg) translateY(6px); opacity: 0.55; }
+  .ghost-card.g2 { transform: rotate(3deg) translateY(10px); opacity: 0.35; }
+
+  .card {
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 30px 26px;
+    color: var(--navy-deep);
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), opacity 0.3s ease;
+  }
+
+  .card.flipping { transform: scale(0.96) rotate(0.5deg); opacity: 0.4; }
+
+  .card .stamp {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--stamp);
+    border: 1px solid var(--stamp);
+    border-radius: 999px;
+    padding: 3px 9px;
+    text-transform: uppercase;
+  }
+
+  .card .category {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .card .scale-badge {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: var(--tag-yellow);
+    color: var(--navy-deep);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 5px;
+    transform: rotate(-4deg);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  }
+
+  .card .timer-pill {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(22,35,58,0.07);
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .card .timer-pill.time-up {
+    background: var(--stamp);
+    color: var(--paper);
+    animation: timerPulse 0.5s ease-in-out 3;
+  }
+  @keyframes timerPulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.12); }
+  }
+
+  .card .timer-start-btn {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--navy-deep);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 13px;
+    border-radius: 999px;
+    border: none;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  }
+  .card .timer-start-btn:active { transform: translateX(-50%) scale(0.96); }
+
+  .card .qnum {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    letter-spacing: 0.08em;
+  }
+
+  .card .qtext {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  .card .hint {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .card .skip-link {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    font-size: 11px;
+    text-decoration: underline;
+    color: var(--ink-soft);
+    padding: 4px 8px;
+  }
+  .card .skip-link:active { opacity: 0.6; }
+
+  .empty-state {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    line-height: 1.4;
+  }
+
+  /* --- Controls --- */
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  button {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 10px;
+    border: none;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  button:active { transform: scale(0.97); }
+
+  .btn-primary {
+    flex: 1;
+    background: var(--gold);
+    color: var(--navy-deep);
+  }
+  .btn-secondary {
+    background: var(--shell-surface);
+    color: var(--shell-text);
+    border: 1px solid var(--shell-border);
+  }
+
+  .fs-toggle {
+    flex: 0 0 auto;
+    font-size: 18px;
+    padding: 14px 16px;
+    line-height: 1;
+  }
+
+  /* --- Fullscreen mode --- */
+  .fs-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--shell-bg);
+    background-image:
+      radial-gradient(circle at 15% 20%, var(--shell-grad1), transparent 40%),
+      radial-gradient(circle at 85% 80%, var(--shell-grad2), transparent 45%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 24px;
+  }
+  .fs-overlay.active { display: flex; }
+
+  .fs-exit {
+    position: absolute;
+    top: env(safe-area-inset-top, 18px);
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--shell-surface);
+    color: var(--shell-text);
+    font-size: 16px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fs-hint {
+    position: absolute;
+    bottom: env(safe-area-inset-bottom, 22px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--shell-text-faint);
+  }
+
+  .fs-stage {
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .fs-stage .stack-wrap {
+    height: min(62vh, 560px);
+  }
+
+  .fs-stage .qtext {
+    font-size: 27px;
+  }
+
+  .counter {
+    text-align: center;
+    font-size: 12px;
+    color: var(--shell-text-soft);
+    margin-bottom: 34px;
+    letter-spacing: 0.05em;
+  }
+
+  /* --- Add question section --- */
+  .section-title {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(244,239,228,0.2);
+    background: rgba(244,239,228,0.06);
+    color: var(--paper);
+  }
+  input[type="text"]::placeholder { color: rgba(244,239,228,0.4); }
+  input[type="text"]:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  .add-btn {
+    background: rgba(244,239,228,0.12);
+    color: var(--paper);
+  }
+
+  .note {
+    font-size: 12px;
+    color: rgba(244,239,228,0.45);
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+
+  /* --- Wildcards --- */
+  .settings-box {
+    background: rgba(244,239,228,0.05);
+    border: 1px solid rgba(244,239,228,0.12);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 28px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .toggle-row .label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .toggle-row .label .desc {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(244,239,228,0.5);
+    margin-top: 3px;
+  }
+
+  .switch {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch .track {
+    position: absolute;
+    inset: 0;
+    background: rgba(244,239,228,0.18);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .switch .track::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    top: 3px;
+    background: var(--paper);
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+  }
+  .switch input:checked + .track { background: var(--gold); }
+  .switch input:checked + .track::before { transform: translateX(18px); }
+
+  .wildcard-count {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(244,239,228,0.1);
+  }
+
+  .wildcard-count.hidden { display: none; }
+
+  .subsetting {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(244,239,228,0.1);
+  }
+  .subsetting.hidden { display: none; }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stepper button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    background: rgba(244,239,228,0.1);
+    color: var(--paper);
+    font-size: 16px;
+    line-height: 1;
+  }
+  .stepper .count {
+    min-width: 22px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .search-row {
+    margin: 18px 0 0;
+  }
+  .search-row input[type="text"] {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .cat-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 2px 0 4px;
+  }
+
+  .cat-chip-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(244,239,228,0.25);
+    background: rgba(244,239,228,0.06);
+    color: var(--paper);
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .cat-chip-btn.off {
+    opacity: 0.4;
+    text-decoration: line-through;
+  }
+  .modal .cat-chip-btn {
+    border: 1px solid rgba(22,35,58,0.2);
+    background: rgba(22,35,58,0.05);
+    color: var(--navy-deep);
+  }
+
+  ul.qlist {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+  }
+
+  ul.qlist li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(244,239,228,0.08);
+    font-size: 13px;
+  }
+
+  ul.qlist li .txt { flex: 1; line-height: 1.4; }
+  ul.qlist li .cat-chip {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    margin-bottom: 2px;
+  }
+  ul.qlist li .txt-line { display: block; }
+  ul.qlist li.used .txt { color: rgba(244,239,228,0.35); text-decoration: line-through; }
+  ul.qlist li.excluded .txt { color: rgba(244,239,228,0.3); }
+  ul.qlist li.hidden-by-search { display: none; }
+
+  .row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .mini-switch {
+    position: relative;
+    width: 34px;
+    height: 20px;
+  }
+  .mini-switch input { opacity: 0; width: 0; height: 0; }
+  .mini-switch .track {
+    position: absolute;
+    inset: 0;
+    background: rgba(244,239,228,0.18);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .mini-switch .track::before {
+    content: '';
+    position: absolute;
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    top: 3px;
+    background: var(--paper);
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+  }
+  .mini-switch input:checked + .track { background: var(--gold); }
+  .mini-switch input:checked + .track::before { transform: translateX(14px); }
+
+  .no-results {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(244,239,228,0.4);
+    padding: 16px 0;
+  }
+
+  .del {
+    background: none;
+    border: none;
+    color: rgba(244,239,228,0.4);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+  }
+  .del:hover { color: var(--stamp); }
+
+  /* --- Verlauf (lebt nur im hellen Popup, daher direkt dunkle Textfarben) --- */
+  .history-empty {
+    font-size: 12px;
+    color: rgba(22,35,58,0.4);
+    padding: 10px 0 2px;
+  }
+  .history-empty.hidden { display: none; }
+
+  ul.history-list {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  ul.history-list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(22,35,58,0.08);
+    font-size: 13px;
+  }
+  ul.history-list li .hnum {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--gold);
+    font-size: 12px;
+    min-width: 26px;
+    padding-top: 1px;
+  }
+  ul.history-list li .htxt { flex: 1; line-height: 1.4; color: var(--navy-deep); }
+  ul.history-list li .hcat {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin-bottom: 2px;
+  }
+
+  .history-clear {
+    display: block;
+    margin: 10px auto 0;
+    background: none;
+    border: none;
+    font-size: 12px;
+    text-decoration: underline;
+    color: rgba(22,35,58,0.5);
+    padding: 4px 8px;
+  }
+  .history-clear:hover { color: var(--stamp); }
+
+  /* --- Fragenliste einklappen --- */
+  .collapse-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: rgba(22,35,58,0.05);
+    border: 1px solid rgba(22,35,58,0.12);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy-deep);
+    margin-top: 4px;
+  }
+  .collapse-toggle .chevron {
+    font-size: 11px;
+    color: var(--ink-soft);
+    transition: transform 0.2s ease;
+  }
+  .collapse-toggle.open .chevron { transform: rotate(180deg); }
+
+  .collapse-body { margin-top: 10px; }
+  .collapse-body.hidden { display: none; }
+
+  /* --- Sichern & Wiederherstellen --- */
+  .backup-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .backup-btn {
+    flex: 1;
+    background: rgba(22,35,58,0.08);
+    color: var(--navy-deep);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--shell-text-faint);
+    margin-top: 40px;
+  }
+
+  .rules-link {
+    display: inline-block;
+    margin-top: 14px;
+    background: none;
+    border: 1px solid rgba(199,154,61,0.4);
+    color: var(--gold);
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 999px;
+  }
+
+  .manage-link {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    background: var(--shell-surface);
+    border: 1px solid var(--shell-border);
+    color: var(--shell-text);
+    font-size: 13px;
+    padding: 12px 16px;
+    border-radius: 10px;
+  }
+
+  /* --- Rules modal --- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,22,38,0.75);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+    padding: 0;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--paper);
+    color: var(--navy-deep);
+    width: 100%;
+    max-width: 460px;
+    max-height: 88vh;
+    max-height: 88dvh;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 22px 24px 4px;
+    flex-shrink: 0;
+  }
+
+  .modal-body {
+    padding: 0 24px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .modal-footer {
+    padding: 14px 24px 22px;
+    flex-shrink: 0;
+    border-top: 1px solid rgba(22,35,58,0.08);
+  }
+
+  .modal h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .modal .modal-sub {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 18px;
+  }
+
+  .modal .step {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .modal .step .num {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--stamp);
+    font-size: 15px;
+    min-width: 20px;
+  }
+
+  .modal .step .txt {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .modal .step .txt strong { font-weight: 600; }
+
+  .modal-close {
+    display: block;
+    width: 100%;
+    background: var(--navy-deep);
+    color: var(--paper);
+    padding: 13px;
+    border-radius: 10px;
+  }
+
+  /* --- Modal sits on a light background, so form elements need dark-on-light colors --- */
+  .modal input[type="text"] {
+    background: rgba(22,35,58,0.05);
+    border: 1px solid rgba(22,35,58,0.18);
+    color: var(--navy-deep);
+  }
+  .modal input[type="text"]::placeholder { color: rgba(22,35,58,0.4); }
+  .modal input[type="text"]:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  .modal .add-btn {
+    background: rgba(22,35,58,0.08);
+    color: var(--navy-deep);
+  }
+
+  .modal .settings-box {
+    background: rgba(22,35,58,0.04);
+    border: 1px solid rgba(22,35,58,0.12);
+  }
+
+  .modal .switch .track { background: rgba(22,35,58,0.18); }
+  .modal .switch input:checked + .track { background: var(--gold); }
+
+  .modal .stepper button {
+    background: rgba(22,35,58,0.08);
+    color: var(--navy-deep);
+  }
+
+  .modal .wildcard-count { border-top: 1px solid rgba(22,35,58,0.1); }
+  .modal .subsetting { border-top: 1px solid rgba(22,35,58,0.1); }
+
+  .modal ul.qlist li { border-bottom: 1px solid rgba(22,35,58,0.1); }
+  .modal ul.qlist li.used .txt { color: rgba(22,35,58,0.35); }
+  .modal ul.qlist li.excluded .txt { color: rgba(22,35,58,0.32); }
+
+  .modal .mini-switch .track { background: rgba(22,35,58,0.18); }
+  .modal .mini-switch input:checked + .track { background: var(--gold); }
+
+  .modal .del { color: rgba(22,35,58,0.35); }
+  .modal .del:hover { color: var(--stamp); }
+
+  .modal .no-results { color: rgba(22,35,58,0.4); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="eyebrow">Kartenstapel-Ersatz</div>
+    <h1>Fragenstapel</h1>
+    <div class="subtitle">Nur die Täfelchen und Stifte einpacken — die Fragen kommen von hier.</div>
+    <button class="rules-link" id="rulesBtn">Spielregeln anzeigen</button>
+  </header>
+
+  <div class="stack-wrap" id="stackWrap">
+    <div class="ghost-card g2"></div>
+    <div class="ghost-card g1"></div>
+    <div class="card" id="card">
+      <div class="stamp">Zug Nr. <span id="drawNum">1</span></div>
+      <div class="category" id="qcategory"></div>
+      <div class="timer-pill hidden" id="timerPill"><span id="timerVal">30</span>s</div>
+      <button type="button" class="timer-start-btn hidden" id="timerStartBtn">▶ Timer starten</button>
+      <div class="qnum" id="qnum">Bereit?</div>
+      <div class="qtext" id="qtext">Tippt auf „Ziehen“, um zu starten.</div>
+      <div class="scale-badge hidden" id="scaleBadge">0–100</div>
+      <div class="hint" id="hint">Antwort geheim auf euer Täfelchen notieren</div>
+      <button type="button" class="skip-link hidden" id="skipBtn">Passt nicht? Frage überspringen</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-primary" id="drawBtn">Nächste Frage ziehen</button>
+    <button class="btn-secondary" id="shuffleBtn" title="Stapel neu mischen">Neu mischen</button>
+    <button class="btn-secondary fs-toggle" id="fsBtn" title="Vollbildmodus">⛶</button>
+  </div>
+  <div class="counter" id="counter">— Fragen im Stapel</div>
+
+  <button class="manage-link" id="manageBtn">Einstellungen</button>
+
+  <footer>Läuft komplett offline im Browser · keine Internetverbindung nötig</footer>
+</div>
+
+<div class="fs-overlay" id="fsOverlay">
+  <button class="fs-exit" id="fsExit" title="Vollbild verlassen">✕</button>
+  <div class="fs-stage" id="fsStage"></div>
+  <div class="fs-hint">Zum Ziehen auf die Karte tippen</div>
+</div>
+
+<div class="modal-overlay" id="manageOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Fragen &amp; Wildcards</h2>
+      <div class="modal-sub">Stapel anpassen, bevor ihr zieht</div>
+    </div>
+
+    <div class="modal-body">
+      <div class="section-title">Darstellung</div>
+      <div class="settings-box">
+        <div class="toggle-row">
+          <div class="label">Helles Design
+            <span class="desc">Wechselt Hintergrund und Bedienelemente auf ein helles Farbschema</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="track"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="section-title">Wildcards</div>
+      <div class="settings-box">
+        <div class="toggle-row">
+          <div class="label">Blankokarten einfügen
+            <span class="desc">Statt einer festen Frage denkt ihr euch spontan selbst eine aus</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="wildcardToggle">
+            <span class="track"></span>
+          </label>
+        </div>
+        <div class="wildcard-count hidden" id="wildcardCountRow">
+          <div class="label">Anzahl im Stapel</div>
+          <div class="stepper">
+            <button type="button" id="wcMinus">–</button>
+            <span class="count" id="wcCount">3</span>
+            <button type="button" id="wcPlus">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Antwortzeit</div>
+      <div class="settings-box">
+        <div class="toggle-row">
+          <div class="label">Timer mit Erinnerungston
+            <span class="desc">Countdown ab dem Ziehen einer Frage — am Ende ertönt ein Signal</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="timerToggle">
+            <span class="track"></span>
+          </label>
+        </div>
+        <div class="wildcard-count hidden" id="timerSecondsRow">
+          <div class="label">Sekunden</div>
+          <div class="stepper">
+            <button type="button" id="tsMinus">–</button>
+            <span class="count" id="tsCount">30</span>
+            <button type="button" id="tsPlus">+</button>
+          </div>
+        </div>
+        <div class="subsetting hidden" id="timerManualRow">
+          <div class="toggle-row">
+            <div class="label">Manueller Start durch Vorleser:in
+              <span class="desc">Timer läuft erst los, wenn ihr auf der Karte auf „Timer starten“ tippt</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="timerManualToggle">
+              <span class="track"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Eigene Fragen hinzufügen</div>
+      <div class="add-row">
+        <input type="text" id="newQ" placeholder="z. B. Wie viele Länder hast du schon bereist?" maxlength="200">
+      </div>
+      <div class="add-row">
+        <input type="text" id="newQCat" placeholder="Kategorie (optional, z. B. 18+)" maxlength="30">
+        <button class="add-btn" id="addBtn">+</button>
+      </div>
+      <div class="note">Tipp: Schreibt vor der Reise eure liebsten Fragen aus der Originalbox hier ab — dauert 5 Minuten und ihr müsst die Box nicht einpacken. Ohne Kategorie landen sie unter „Eigene Frage“ — mit z. B. „18+“ lassen sie sich später gezielt filtern.</div>
+
+      <div class="section-title">Kategorien filtern</div>
+      <div class="cat-filter" id="catFilter"></div>
+
+      <button type="button" class="collapse-toggle" id="qlistToggle">
+        <span>Alle Fragen (<span id="qlistCount">0</span>)</span>
+        <span class="chevron" id="qlistChevron">▾</span>
+      </button>
+      <div class="collapse-body hidden" id="qlistBody">
+        <div class="search-row">
+          <input type="text" id="searchQ" placeholder="Nach Frage oder Kategorie suchen, um auszuschließen…">
+        </div>
+        <ul class="qlist" id="qlist"></ul>
+        <div class="no-results hidden" id="noResults">Keine Fragen gefunden.</div>
+      </div>
+
+      <div class="section-title">Verlauf</div>
+      <div class="history-empty" id="historyEmpty">Noch keine Fragen gezogen.</div>
+      <ul class="history-list" id="historyList"></ul>
+      <button type="button" class="history-clear hidden" id="historyClearBtn">Verlauf leeren</button>
+
+      <div class="section-title">Sichern &amp; Wiederherstellen</div>
+      <div class="backup-row">
+        <button type="button" class="backup-btn" id="exportBtn">Exportieren</button>
+        <button type="button" class="backup-btn" id="importBtn">Importieren</button>
+        <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      </div>
+      <div class="note">Sichert eure Fragen und Einstellungen als Datei — praktisch vor einem Handywechsel oder zum Teilen mit der Reisegruppe.</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-close" id="manageClose">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rulesOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>So wird gespielt</h2>
+      <div class="modal-sub">Kurzfassung in eigenen Worten — für den schnellen Überblick unterwegs</div>
+    </div>
+
+    <div class="modal-body">
+      <div class="step"><div class="num">1</div><div class="txt">Jede Person nimmt sich ein <strong>Täfelchen und einen Stift</strong> und schreibt ihren Namen darauf.</div></div>
+      <div class="step"><div class="num">2</div><div class="txt">Eine Person zieht hier in der App eine Frage und liest sie <strong>laut vor</strong>.</div></div>
+      <div class="step"><div class="num">3</div><div class="txt">Alle überlegen sich <strong>gleichzeitig und im Geheimen</strong> eine eigene Antwort als Zahl und schreiben sie verdeckt auf ihr Täfelchen. Während dieser Phase wird nicht miteinander geredet.</div></div>
+      <div class="step"><div class="num">4</div><div class="txt">Die Täfelchen werden alle <strong>verdeckt in die Tischmitte</strong> gelegt.</div></div>
+      <div class="step"><div class="num">5</div><div class="txt">Gemeinsam ordnet ihr die Täfelchen nun der Reihe nach, indem ihr euch gegenseitig einschätzt: Wer hat wahrscheinlich die <strong>niedrigste</strong>, wer die <strong>höchste</strong> Antwort? Ihr dürft die Täfelchen so lange verschieben, bis sich alle einig sind.</div></div>
+      <div class="step"><div class="num">6</div><div class="txt">Wenn die Reihenfolge steht, werden alle Täfelchen <strong>gleichzeitig umgedreht</strong>. Jetzt zeigt sich, ob die Einschätzung gestimmt hat.</div></div>
+      <div class="step"><div class="num">7</div><div class="txt">Für jedes Täfelchen, das an der <strong>richtigen Stelle</strong> lag, gibt es einen Punkt für die ganze Gruppe — ihr spielt kooperativ, nicht gegeneinander.</div></div>
+      <div class="step"><div class="num">8</div><div class="txt">Die nächste Person zieht die nächste Frage. Nach <strong>acht Fragen</strong> ist eine Runde vorbei — zählt eure Punkte zusammen und schaut, wie gut ihr euch kennt.</div></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="modal-close" id="rulesClose">Verstanden</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Startset: 210 Fragen (18 selbst formulierte + eigene Fragensammlung des Nutzers)
+  const starterQuestions = [
+    { text: 'Wie viele Push-ups schaffst du am Stück?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie weit könntest du einen Stein übers Wasser springen lassen (in Metern)?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie viele Minuten brauchst du morgens, um startklar zu sein?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Länder hast du bisher besucht?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie viele Stunden Schlaf brauchst du, um wirklich fit zu sein?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie oft warst du in den letzten 12 Monaten krank?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie viele Kilometer würdest du maximal zu Fuß gehen, statt ein Taxi zu nehmen?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie hoch schätzt du deine eigene Pünktlichkeit auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Handynummern kennst du auswendig?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Minuten könntest du ohne Handy in einer Warteschlange aushalten?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele verschiedene Jobs hattest du in deinem Leben schon?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie risikofreudig bist du auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Bücher hast du im letzten Jahr gelesen?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie oft hast du in den letzten 7 Tagen gekocht?', scale: 'frei', category: 'Essen' },
+    { text: 'Wie gut kannst du auf einer Skala von 0 bis 100 mit Kritik umgehen?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele SMS/Nachrichten hast du wahrscheinlich heute schon verschickt?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie lange könntest du ohne Süßigkeiten auskommen (in Tagen)?', scale: 'frei', category: 'Essen' },
+    { text: 'Wie hoch ist dein Chaos-Level im eigenen Zimmer auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Alltag' },
+    { text: 'Wie gut kommst du mit Teamarbeit zurecht, wenn du es auf einer Skala von 0 bis 100 bewertest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie lange würde dein ideales Nickerchen dauern?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie zufrieden bist du aktuell mit deiner Frisur, wenn du sie zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Alltag' },
+    { text: 'Welchen Betrag würdest du maximal zahlen, damit deine Lieblingsband ein Privatkonzert bei dir spielt?', scale: 'frei', category: 'Finanzen' },
+    { text: 'Wie häufig gehst du im Jahr normalerweise zum Friseur?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie spannend wäre ein persönliches Treffen mit dem Papst für dich auf einer 0–100-Skala?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie gern verbringst du Zeit mit Video- oder Computerspielen, wenn 0 „gar nicht“ und 100 „sehr gern“ bedeutet?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie viele Kontinente hast du bisher persönlich betreten?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie lange brauchst du durchschnittlich für deinen Arbeits- oder Schulweg?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie zuverlässig findest du dein Gedächtnis auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Flaschen hochprozentigen Alkohols besitzt du aktuell?', scale: 'frei', category: 'Alltag' },
+    { text: 'Welches Jahresgehalt müsste man dir bieten, damit du ein Jahr in der Antarktis arbeitest?', scale: 'frei', category: 'Finanzen' },
+    { text: 'Wie gut läuft dein heutiger Tag bisher, wenn du ihn zwischen 0 und 100 bewertest?', scale: '0-100', category: 'Alltag' },
+    { text: 'Wie viele Zimmer hat dein Zuhause?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Lebensjahre würdest du eintauschen, um ein Instrument sofort perfekt zu beherrschen?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie viele Sekunden könntest du die Luft anhalten?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie gern stehst du in der Küche und kochst, gemessen auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie viele Kissen liegen normalerweise auf deinem Bett?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie kreativ würdest du dich einschätzen, wenn du eine Zahl zwischen 0 und 100 vergeben müsstest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele M&M’s könntest du gleichzeitig in deinen Mund stecken?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie stark interessieren dich neue technische Geräte, wenn 0 „gar nicht“ und 100 „extrem“ bedeutet?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie sehr gefällt dir das Land, in dem du lebst, auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Alltag' },
+    { text: 'Wie wichtig wäre dir ein eigenes Porträt in einem Museum, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wie gern gehst du auf Konzerte oder Festivals, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wann stehst du am Wochenende normalerweise auf?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Gesellschaftsspiele besitzt du?', scale: 'frei', category: 'Hobbys' },
+    { text: 'Wie viele Paar Schuhe gehören dir?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gut kannst du spontan ohne Rezept kochen, wenn du es auf einer 0–100-Skala einordnest?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie sehr glaubst du daran, dass man Glück kaufen kann, auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie oft würdest du Disneyland Paris besuchen, wenn alles kostenlos wäre?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie sehr magst du Disney-Filme, wenn du eine Zahl zwischen 0 und 100 vergeben müsstest?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie viele Cousins und Cousinen hast du insgesamt?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie sehr hältst du dich an Regeln, wenn 0 „gar nicht“ und 100 „immer“ bedeutet?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Tassen Kaffee oder Tee hast du heute bereits getrunken?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie sehr liebst du Tiere, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie viele Mützen, Hüte oder Caps besitzt du?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie wählerisch bist du beim Essen, wenn du es auf einer Skala von 0 bis 100 einordnest?', scale: '0-100', category: 'Essen' },
+    { text: 'Wie gern würdest du Bundeskanzler oder Bundeskanzlerin sein, gemessen zwischen 0 und 100?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wenn du deine Körpergröße frei wählen könntest – wie groß wärst du gern?', scale: 'frei', category: 'Fantasie' },
+    { text: 'In welches Jahr würdest du reisen, wenn du einen Tag dort verbringen könntest?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie viele Sportarten hast du mindestens ein Jahr lang aktiv betrieben?', scale: 'frei', category: 'Hobbys' },
+    { text: 'Wie schick findest du dein heutiges Outfit auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Alltag' },
+    { text: 'Welche Schuhgröße trägst du?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie groß ist dein Interesse an Reality-Shows, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie oft hast du in deinem Leben schon einen Reifen gewechselt?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie impulsiv triffst du Entscheidungen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie gern magst du Umarmungen, wenn 0 „gar nicht“ und 100 „sehr gern“ bedeutet?', scale: '0-100', category: 'Beziehungen' },
+    { text: 'Wie abergläubisch bist du auf einer Skala von 0 bis 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie wohl fühlst du dich unter Menschen, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie lange betreibst du dein liebstes Hobby schon?', scale: 'frei', category: 'Hobbys' },
+    { text: 'Wie lange hat deine längste Beziehung gedauert?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie viele Schlüssel hängen an deinem Schlüsselbund?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gut würdest du eine Zombie-Apokalypse überstehen, wenn du es zwischen 0 und 100 bewertest?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wie gern feierst du deinen Geburtstag, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Welches historische Jahr fasziniert dich am meisten?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie wichtig ist dir gutes Essen, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Essen' },
+    { text: 'Wie faul würdest du dich einschätzen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie stark fürchtest du dich vor Dunkelheit, wenn 0 „gar nicht“ und 100 „sehr stark“ bedeutet?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie sehr magst du Horrorfilme, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie schwer fällt es dir, Dinge wegzuwerfen, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Bücher liest du durchschnittlich pro Jahr?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie gern würdest du in einem Hollywoodfilm mitspielen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wann gehst du unter der Woche normalerweise schlafen?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie schüchtern bist du, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Vornamen hast du?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie oft isst du im Monat Fast Food?', scale: 'frei', category: 'Essen' },
+    { text: 'Wie sehr magst du Comics, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie gern gehst du shoppen, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Alltag' },
+    { text: 'Wie sehr magst du Musicals, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie viele Lebensjahre würdest du opfern, um alle Sprachen perfekt zu sprechen?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie oft hast du „Titanic“ gesehen?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie viele Personen am Tisch würdest du beim Armdrücken besiegen?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie oft warst du schon Ski- oder Snowboardfahren?', scale: 'frei', category: 'Hobbys' },
+    { text: 'Wie oft isst du pro Woche Fleisch?', scale: 'frei', category: 'Essen' },
+    { text: 'Wie viele Facebook-Freunde hast du?', scale: 'frei', category: 'Soziales' },
+    { text: 'Wie viele Kinder hättest du gern irgendwann?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie lange könntest du auf einem Bein stehen, ohne umzufallen?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie wichtig ist dir deine Familie, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Beziehungen' },
+    { text: 'Wie mürrisch wirst du, wenn du hungrig bist, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie stark beeinflusst das Wetter deine Stimmung, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viel Geld bräuchtest du, um dich finanziell sicher zu fühlen?', scale: 'frei', category: 'Finanzen' },
+    { text: 'Wie gern würdest du Fallschirmspringen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie viele Topfpflanzen stehen bei dir zu Hause?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gut kommst du mit älteren Menschen zurecht, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie oft trainierst du im Monat?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie gern veranstaltest du Partys bei dir zu Hause, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie groß ist deine Angst vor Spinnen, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Gesundheit' },
+    { text: 'Wie oft gehst du im Monat in ein Restaurant?', scale: 'frei', category: 'Essen' },
+    { text: 'Wie gesund ernährst du dich, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Essen' },
+    { text: 'Wie gern würdest du Geheimagent sein, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wie viele Filme schaust du durchschnittlich im Monat?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie gern würdest du Bungee springen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie wohl fühlst du dich, wenn du vor vielen Menschen sprechen musst?', scale: 'frei', category: 'Soziales' },
+    { text: 'Wie viele Parfüms besitzt du?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wenn du für immer ein bestimmtes Alter behalten könntest – welches wäre es?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie gern würdest du einer Geheimgesellschaft beitreten, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wie lange würdest du maximal auf einen freien Tisch im Restaurant warten?', scale: 'frei', category: 'Essen' },
+    { text: 'In wie vielen Sprachen kennst du Schimpfwörter?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie sehr liegt dir Gartenarbeit, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Mit welchem Alter bist du in deine erste eigene Wohnung gezogen?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gut kommst du mit Kindern klar, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie stark reagierst du mit einem „ooooh!“ auf ein süßes Kätzchen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Spaß' },
+    { text: 'Wie wohl fühlst du dich mit Nacktheit, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Sammlungen von Dingen besitzt du?', scale: 'frei', category: 'Hobbys' },
+    { text: 'Welches Musikjahrzehnt des 20. Jahrhunderts gefällt dir am besten?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie sorgfältig trennst du deinen Müll, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Alltag' },
+    { text: 'Wie offen bist du für neue Erfahrungen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Minuten wartest du bei privaten Treffen, bis du nachhakst?', scale: 'frei', category: 'Soziales' },
+    { text: 'Wie sehr beschäftigt dich die Meinung anderer, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie alt fühlst du dich innerlich?', scale: 'frei', category: 'Persönlichkeit' },
+    { text: 'Wie viele Tage dauerte deine längste Reise?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie lange würdest du brauchen, um 50.000 € auszugeben?', scale: 'frei', category: 'Finanzen' },
+    { text: 'Wie viele Minuten vor einem wichtigen Termin bist du normalerweise da?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie lange würdest du auf einer privaten Insel bleiben wollen?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie viele Minuten brauchst du morgens, bis du nach dem ersten Weckerklingeln aufstehst?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie groß wäre dein ideales Zuhause in Quadratmetern?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie stark ist deine Höhenangst, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Gesundheit' },
+    { text: 'Wie oft erledigst du Dinge erst in letzter Minute, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Tattoos hast du?', scale: 'frei', category: 'Persönlichkeit' },
+    { text: 'Wie sehr brauchst du das letzte Wort, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Mit welchem Alter hast du deinen ersten festen Job begonnen?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Minuten verbringst du durchschnittlich unter der Dusche?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gern würdest du fünf Jahre auf einer Marskolonie leben, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wie gern liest du auf der Toilette, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Alltag' },
+    { text: 'Wie viele Lebensjahre würdest du eintauschen, um dich teleportieren zu können?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie teuer war das wertvollste Objekt, das du je kaputt gemacht hast?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gern tanzt du, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie viel würdest du maximal für eine Woche im Weltall bezahlen?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie sehr magst du Dokumentarfilme, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie wichtig sind dir Traditionen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Liegestütze schaffst du am Stück?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie viele Lebensjahre würdest du hergeben, um sofort Milliardär zu werden?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie viele Schneetage pro Jahr würdest du dir wünschen?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie bereit bist du, dein Essen zu teilen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie viele alkoholische Getränke trinkst du pro Woche?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie lange besteht deine längste Freundschaft?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie lange sollte deine perfekte Mittelmeer-Kreuzfahrt dauern?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie sehr magst du abstrakte Kunst, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Interessen' },
+    { text: 'Wie viele Stunden schläfst du idealerweise pro Nacht?', scale: 'frei', category: 'Gesundheit' },
+    { text: 'Wie viel würdest du maximal in einem Spitzenrestaurant bezahlen?', scale: 'frei', category: 'Essen' },
+    { text: 'Wann stehst du unter der Woche normalerweise auf?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie gern sprichst du mit fremden Menschen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie viele Apps hast du auf deinem Smartphone?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie sehr magst du Karaoke, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie viel besser erscheint dir „früher“ im Vergleich zu heute, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie gern reparierst du Dinge selbst, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie lange sollte eine Reise zum Mond dauern?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie sehr magst du Kostümpartys, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie gern bist du im Wasser, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Hobbys' },
+    { text: 'Wie gern trainierst du deine Fitness, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Gesundheit' },
+    { text: 'Wie viel Bargeld hast du normalerweise dabei?', scale: 'frei', category: 'Finanzen' },
+    { text: 'Wie mutig würdest du dich einschätzen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie tollpatschig bist du, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie lange wohnst du schon an deinem aktuellen Wohnort?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie weit könntest du deinen Schuh werfen?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie wichtig wäre es dir, berühmt zu sein, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Fantasie' },
+    { text: 'Wie groß ist deine Angst vor dem Zahnarzt, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Gesundheit' },
+    { text: 'Wie oft gehst du täglich ins Bad?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Haustiere würdest du gern haben, wenn du völlig frei wählen könntest?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie sehr magst du deinen Vornamen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Personen am Tisch würdest du bei Scrabble schlagen?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie schlecht kannst du verlieren, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie gern nimmst du an Familienfeiern teil, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Beziehungen' },
+    { text: 'Wie oft gehst du im Jahr ins Kino?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie viel würdest du maximal für einen Dinosaurier-Freizeitpark zahlen?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie viele Sekunden kannst du ohne zu blinzeln aushalten?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie gelenkig bist du, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Gesundheit' },
+    { text: 'Wie viele Personen am Tisch würdest du im 100-Meter-Lauf besiegen?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie ehrgeizig bist du beruflich, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie gern würdest du in Hogwarts zur Schule gehen?', scale: 'frei', category: 'Fantasie' },
+    { text: 'Wie alt warst du bei deiner frühesten Kindheitserinnerung?', scale: 'frei', category: 'Persönlichkeit' },
+    { text: 'Wie verführerisch findest du dich selbst, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie oft bist du bisher umgezogen?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie oft kaufst du pro Woche Lebensmittel ein?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie viele Nächte hast du maximal am Stück gezeltet?', scale: 'frei', category: 'Hobbys' },
+    { text: 'In wie vielen Sprachen kannst du „Ich liebe dich“ sagen?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie viele Museen hast du in den letzten zwölf Monaten besucht?', scale: 'frei', category: 'Interessen' },
+    { text: 'Wie gern erzählst du Witze, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie oft könntest du „Hans hackt Holz hinterm Haus“ fehlerfrei wiederholen?', scale: 'frei', category: 'Spaß' },
+    { text: 'Wie viele Stunden verbringst du bei einem Strandtag direkt am Wasser?', scale: 'frei', category: 'Reisen' },
+    { text: 'Wie gern erstellst du Listen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie gern telefonierst du, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Soziales' },
+    { text: 'Wie viele deiner Beziehungen dauerten länger als ein Jahr?', scale: 'frei', category: 'Beziehungen' },
+    { text: 'Wie alt glaubst du, wirst du einmal, wenn du es zwischen 0 und 100 einordnest?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie mürrisch wirst du, wenn du zu wenig Schlaf hattest, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Urlaubstage wären für dich ideal?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie erwachsen fühlst du dich, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viel Fantasie hast du, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie schnell fühlst du dich verletzt oder angegriffen, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Minuten brauchst du morgens für dein äußeres Erscheinungsbild?', scale: 'frei', category: 'Alltag' },
+    { text: 'Wie oft kochst du pro Woche?', scale: 'frei', category: 'Essen' },
+    { text: 'Wie feministisch bist du eingestellt, bewertet zwischen 0 und 100?', scale: '0-100', category: 'Persönlichkeit' },
+    { text: 'Wie viele Sexualpartner hattest du bisher?', scale: 'frei', category: '18+' },
+    { text: 'Wie viele One-Night-Stands hattest du bisher?', scale: 'frei', category: '18+' },
+    { text: 'Wie viele Dating-Apps hast du aktuell installiert?', scale: 'frei', category: '18+' },
+    { text: 'Wie viele Shots könntest du an einem Abend realistisch trinken?', scale: 'frei', category: '18+' },
+    { text: 'Wie peinlich war dein bisher schlimmster Kater, auf einer Skala von 0 bis 100?', scale: '0-100', category: '18+' },
+    { text: 'Wie viele Ex-Partner folgst du noch auf Social Media?', scale: 'frei', category: '18+' },
+    { text: 'Wie mutig bist du beim Flirten, auf einer Skala von 0 bis 100?', scale: '0-100', category: '18+' },
+    { text: 'Wie oft warst du schon in einen WG-Mitbewohner oder eine Kollegin/einen Kollegen verliebt?', scale: 'frei', category: '18+' },
+    { text: 'Wie viele Nächte hast du schon durchgemacht, weil du jemanden kennengelernt hast?', scale: 'frei', category: '18+' },
+    { text: 'Wie oft warst du schon eifersüchtig auf den/die Ex deines Partners oder deiner Partnerin?', scale: 'frei', category: '18+' },
+    { text: 'Wie viele Dates hattest du insgesamt schon, grob geschätzt?', scale: 'frei', category: '18+' },
+    { text: 'Wie oft hast du schon jemanden auf einer Dating-App gematcht, ohne danach zu schreiben?', scale: 'frei', category: '18+' },
+    { text: 'Wie viele Ex-Partner hast du insgesamt?', scale: 'frei', category: '18+' },
+    { text: 'Wie oft bist du schon volltrunken ins Bett gefallen, ohne dich auszuziehen?', scale: 'frei', category: '18+' },
+    { text: 'Wie riskant flirtest du normalerweise, auf einer Skala von 0 bis 100?', scale: '0-100', category: '18+' },
+  ];
+
+  let questions = starterQuestions.map((q, i) => ({ id: 'starter-' + i, text: q.text, scale: q.scale, category: q.category, used: false, excluded: q.category === '18+' }));
+  let deck = []; // shuffled ids of unused/non-excluded questions, may include 'wildcard-N' entries
+  let drawCount = 0;
+  let wildcardEnabled = false;
+  let wildcardCount = 3;
+  let usedWildcards = 0;
+  let searchTerm = '';
+  let timerEnabled = false;
+  let timerSeconds = 30;
+  let timerManualStart = false;
+  let timerInterval = null;
+  let timerRemaining = 0;
+  let audioCtx = null;
+  let compressorNode = null;
+  let lightTheme = false;
+  let history = []; // { text, category, isWildcard, drawNum } — neuestes zuerst
+  const HISTORY_LIMIT = 30;
+
+  const cardEl = document.getElementById('card');
+  const qnumEl = document.getElementById('qnum');
+  const qcategoryEl = document.getElementById('qcategory');
+  const scaleBadgeEl = document.getElementById('scaleBadge');
+  const timerPillEl = document.getElementById('timerPill');
+  const timerValEl = document.getElementById('timerVal');
+  const timerStartBtn = document.getElementById('timerStartBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  const qtextEl = document.getElementById('qtext');
+  const hintEl = document.getElementById('hint');
+  const drawNumEl = document.getElementById('drawNum');
+  const counterEl = document.getElementById('counter');
+  const qlistEl = document.getElementById('qlist');
+  const noResultsEl = document.getElementById('noResults');
+  const catFilterEl = document.getElementById('catFilter');
+  const historyListEl = document.getElementById('historyList');
+  const historyEmptyEl = document.getElementById('historyEmpty');
+  const historyClearBtn = document.getElementById('historyClearBtn');
+  const qlistToggle = document.getElementById('qlistToggle');
+  const qlistBody = document.getElementById('qlistBody');
+  const qlistCountEl = document.getElementById('qlistCount');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const importFileInput = document.getElementById('importFile');
+  const themeToggle = document.getElementById('themeToggle');
+  const drawBtn = document.getElementById('drawBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const addBtn = document.getElementById('addBtn');
+  const newQInput = document.getElementById('newQ');
+  const newQCatInput = document.getElementById('newQCat');
+  const searchInput = document.getElementById('searchQ');
+  const wildcardToggle = document.getElementById('wildcardToggle');
+  const wildcardCountRow = document.getElementById('wildcardCountRow');
+  const wcCountEl = document.getElementById('wcCount');
+  const wcMinus = document.getElementById('wcMinus');
+  const wcPlus = document.getElementById('wcPlus');
+  const timerToggle = document.getElementById('timerToggle');
+  const timerSecondsRow = document.getElementById('timerSecondsRow');
+  const tsCountEl = document.getElementById('tsCount');
+  const tsMinus = document.getElementById('tsMinus');
+  const tsPlus = document.getElementById('tsPlus');
+  const timerManualRow = document.getElementById('timerManualRow');
+  const timerManualToggle = document.getElementById('timerManualToggle');
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // --- Timer mit Erinnerungston ---
+  function ensureAudioCtx() {
+    if (!audioCtx) {
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Kompressor hebt die wahrgenommene Lautstärke an, ohne zu übersteuern —
+        // wichtig, damit der Ton sich auch gegen laufende Musik durchsetzt.
+        compressorNode = audioCtx.createDynamicsCompressor();
+        compressorNode.threshold.setValueAtTime(-16, audioCtx.currentTime);
+        compressorNode.knee.setValueAtTime(8, audioCtx.currentTime);
+        compressorNode.ratio.setValueAtTime(10, audioCtx.currentTime);
+        compressorNode.attack.setValueAtTime(0.003, audioCtx.currentTime);
+        compressorNode.release.setValueAtTime(0.15, audioCtx.currentTime);
+        compressorNode.connect(audioCtx.destination);
+      } catch (e) { /* Web Audio nicht verfügbar */ }
+    } else if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function playReminderTone() {
+    const ctx = audioCtx;
+    if (ctx) {
+      try {
+        const output = compressorNode || ctx.destination;
+        const beep = (freq, start, dur, type, peak) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = type || 'triangle';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, ctx.currentTime + start);
+          gain.gain.exponentialRampToValueAtTime(peak || 0.85, ctx.currentTime + start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + start + dur);
+          osc.connect(gain).connect(output);
+          osc.start(ctx.currentTime + start);
+          osc.stop(ctx.currentTime + start + dur + 0.02);
+        };
+        // Zwei kurze Vorwarntöne, dann ein lauterer, durchdringenderer Schlusston
+        beep(880, 0, 0.16, 'triangle', 0.8);
+        beep(880, 0.2, 0.16, 'triangle', 0.8);
+        beep(1318, 0.42, 0.4, 'square', 0.7);
+        beep(1318, 0.42, 0.4, 'triangle', 0.9); // zweite Schicht für mehr Fülle/Lautstärke
+      } catch (e) { /* Ton konnte nicht abgespielt werden */ }
+    }
+    if (navigator.vibrate) {
+      try { navigator.vibrate([120, 80, 120, 80, 260]); } catch (e) { /* Vibration nicht verfügbar */ }
+    }
+  }
+
+  function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    timerPillEl.classList.add('hidden');
+    timerPillEl.classList.remove('time-up');
+  }
+
+  function startTimer() {
+    stopTimer();
+    timerStartBtn.classList.add('hidden');
+    if (!timerEnabled) return;
+    timerRemaining = timerSeconds;
+    timerValEl.textContent = timerRemaining;
+    timerPillEl.classList.remove('hidden');
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      if (timerRemaining <= 0) {
+        timerValEl.textContent = '0';
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerPillEl.classList.add('time-up');
+        playReminderTone();
+      } else {
+        timerValEl.textContent = timerRemaining;
+      }
+    }, 1000);
+  }
+
+  // Wird nach jedem Ziehen aufgerufen: startet den Timer automatisch,
+  // oder zeigt bei manuellem Start nur den "Timer starten"-Button an.
+  function applyTimerForNewCard() {
+    if (!timerEnabled) {
+      stopTimer();
+      timerStartBtn.classList.add('hidden');
+      return;
+    }
+    if (timerManualStart) {
+      stopTimer();
+      timerStartBtn.classList.remove('hidden');
+    } else {
+      startTimer();
+    }
+  }
+
+  function rebuildDeck() {
+    usedWildcards = 0;
+    const ids = questions.filter(q => !q.used && !q.excluded).map(q => q.id);
+    if (wildcardEnabled && wildcardCount > 0) {
+      for (let i = 0; i < wildcardCount; i++) ids.push('wildcard-' + i);
+    }
+    deck = shuffle(ids);
+  }
+
+  async function persist() {
+    try {
+      await window.storage?.set('fragenstapel-state', JSON.stringify({ questions, wildcardEnabled, wildcardCount, timerEnabled, timerSeconds, timerManualStart, lightTheme, history }));
+    } catch (e) { /* offline oder nicht verfügbar — kein Problem, App läuft im Speicher weiter */ }
+  }
+
+  async function load() {
+    try {
+      const res = await window.storage?.get('fragenstapel-state');
+      if (res && res.value) {
+        const parsed = JSON.parse(res.value);
+        if (parsed.questions && parsed.questions.length) {
+          const loaded = parsed.questions.map(q => ({ excluded: false, scale: 'frei', category: '', ...q }));
+          const loadedIds = new Set(loaded.map(q => q.id));
+          // Neue Standardfragen (z. B. eine später ergänzte Kategorie), die im gespeicherten
+          // Stand noch fehlen, werden ergänzt statt beim Laden verloren zu gehen.
+          const missingDefaults = questions.filter(q => !loadedIds.has(q.id));
+          questions = loaded.concat(missingDefaults);
+        }
+        if (typeof parsed.wildcardEnabled === 'boolean') wildcardEnabled = parsed.wildcardEnabled;
+        if (typeof parsed.wildcardCount === 'number') wildcardCount = parsed.wildcardCount;
+        if (typeof parsed.timerEnabled === 'boolean') timerEnabled = parsed.timerEnabled;
+        if (typeof parsed.timerSeconds === 'number') timerSeconds = parsed.timerSeconds;
+        if (typeof parsed.timerManualStart === 'boolean') timerManualStart = parsed.timerManualStart;
+        if (typeof parsed.lightTheme === 'boolean') lightTheme = parsed.lightTheme;
+        if (Array.isArray(parsed.history)) history = parsed.history;
+      }
+    } catch (e) { /* kein gespeicherter Stand vorhanden — Startset wird verwendet */ }
+    wildcardToggle.checked = wildcardEnabled;
+    wildcardCountRow.classList.toggle('hidden', !wildcardEnabled);
+    wcCountEl.textContent = wildcardCount;
+    timerToggle.checked = timerEnabled;
+    timerSecondsRow.classList.toggle('hidden', !timerEnabled);
+    timerManualRow.classList.toggle('hidden', !timerEnabled);
+    tsCountEl.textContent = timerSeconds;
+    timerManualToggle.checked = timerManualStart;
+    themeToggle.checked = lightTheme;
+    document.body.classList.toggle('light-theme', lightTheme);
+    renderHistory();
+    rebuildDeck();
+    renderList();
+    renderCounter();
+  }
+
+  function renderCounter() {
+    const remaining = questions.filter(q => !q.used && !q.excluded).length + (wildcardEnabled ? wildcardCount - usedWildcards : 0);
+    const total = questions.filter(q => !q.excluded).length + (wildcardEnabled ? wildcardCount : 0);
+    counterEl.textContent = remaining + ' von ' + total + ' Fragen übrig';
+  }
+
+  function renderList() {
+    qlistEl.innerHTML = '';
+    const term = searchTerm.trim().toLowerCase();
+    let visibleCount = 0;
+    questions.forEach(q => {
+      const matches = !term || q.text.toLowerCase().includes(term) || (q.category || '').toLowerCase().includes(term);
+      if (!matches) return;
+      visibleCount++;
+      const li = document.createElement('li');
+      let cls = '';
+      if (q.used) cls += ' used';
+      if (q.excluded) cls += ' excluded';
+      li.className = cls.trim();
+
+      const textWrap = document.createElement('div');
+      textWrap.className = 'txt';
+
+      if (q.category) {
+        const chip = document.createElement('span');
+        chip.className = 'cat-chip';
+        chip.textContent = q.category + (q.scale === '0-100' ? ' · 0–100' : '');
+        textWrap.appendChild(chip);
+      }
+      const span = document.createElement('span');
+      span.className = 'txt-line';
+      span.textContent = q.text;
+      textWrap.appendChild(span);
+      li.appendChild(textWrap);
+
+      const actions = document.createElement('div');
+      actions.className = 'row-actions';
+
+      const label = document.createElement('label');
+      label.className = 'mini-switch';
+      label.title = q.excluded ? 'Wieder in den Stapel aufnehmen' : 'Aus dem Stapel ausschließen';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !q.excluded;
+      cb.onchange = () => toggleExcluded(q.id, !cb.checked);
+      const track = document.createElement('span');
+      track.className = 'track';
+      label.appendChild(cb);
+      label.appendChild(track);
+      actions.appendChild(label);
+
+      const del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '✕';
+      del.title = 'Frage endgültig löschen';
+      del.onclick = () => removeQuestion(q.id);
+      actions.appendChild(del);
+
+      li.appendChild(actions);
+      qlistEl.appendChild(li);
+    });
+    noResultsEl.classList.toggle('hidden', visibleCount !== 0);
+    renderCategoryFilter();
+    qlistCountEl.textContent = questions.length;
+  }
+
+  function renderCategoryFilter() {
+    const counts = {}; // category -> { total, included }
+    questions.forEach(q => {
+      if (!q.category) return;
+      if (!counts[q.category]) counts[q.category] = { total: 0, included: 0 };
+      counts[q.category].total++;
+      if (!q.excluded) counts[q.category].included++;
+    });
+    const cats = Object.keys(counts).sort((a, b) => a.localeCompare(b, 'de'));
+    catFilterEl.innerHTML = '';
+    cats.forEach(cat => {
+      const { total, included } = counts[cat];
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cat-chip-btn' + (included === 0 ? ' off' : '');
+      btn.textContent = cat + ' (' + included + '/' + total + ')';
+      btn.onclick = () => toggleCategoryFilter(cat);
+      catFilterEl.appendChild(btn);
+    });
+  }
+
+  function toggleCategoryFilter(category) {
+    const anyIncluded = questions.some(q => q.category === category && !q.excluded);
+    questions.forEach(q => { if (q.category === category) q.excluded = anyIncluded; });
+    rebuildDeck();
+    renderList();
+    renderCounter();
+    persist();
+  }
+
+  // --- Zug-Historie ---
+  function addHistoryEntry(entry) {
+    history.unshift(entry);
+    if (history.length > HISTORY_LIMIT) history = history.slice(0, HISTORY_LIMIT);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    historyListEl.innerHTML = '';
+    historyEmptyEl.classList.toggle('hidden', history.length !== 0);
+    historyClearBtn.classList.toggle('hidden', history.length === 0);
+    history.forEach(h => {
+      const li = document.createElement('li');
+      const num = document.createElement('span');
+      num.className = 'hnum';
+      num.textContent = '#' + h.drawNum;
+      li.appendChild(num);
+
+      const txtWrap = document.createElement('div');
+      txtWrap.className = 'htxt';
+      if (h.category) {
+        const cat = document.createElement('span');
+        cat.className = 'hcat';
+        cat.textContent = h.category;
+        txtWrap.appendChild(cat);
+      }
+      const line = document.createElement('span');
+      line.textContent = h.text;
+      txtWrap.appendChild(line);
+      li.appendChild(txtWrap);
+
+      historyListEl.appendChild(li);
+    });
+  }
+
+  function clearHistory() {
+    history = [];
+    renderHistory();
+    persist();
+  }
+
+  // --- Sichern & Wiederherstellen ---
+  function exportData() {
+    const payload = {
+      app: 'fragenstapel',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      questions, wildcardEnabled, wildcardCount, timerEnabled, timerSeconds, timerManualStart, lightTheme
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = 'fragenstapel-backup-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function importData(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || !Array.isArray(data.questions) || data.questions.length === 0) {
+          throw new Error('Ungültiges Format');
+        }
+        questions = data.questions.map(q => ({ excluded: false, scale: 'frei', category: '', ...q, used: false }));
+        if (typeof data.wildcardEnabled === 'boolean') wildcardEnabled = data.wildcardEnabled;
+        if (typeof data.wildcardCount === 'number') wildcardCount = data.wildcardCount;
+        if (typeof data.timerEnabled === 'boolean') timerEnabled = data.timerEnabled;
+        if (typeof data.timerSeconds === 'number') timerSeconds = data.timerSeconds;
+        if (typeof data.timerManualStart === 'boolean') timerManualStart = data.timerManualStart;
+        if (typeof data.lightTheme === 'boolean') lightTheme = data.lightTheme;
+
+        wildcardToggle.checked = wildcardEnabled;
+        wildcardCountRow.classList.toggle('hidden', !wildcardEnabled);
+        wcCountEl.textContent = wildcardCount;
+        timerToggle.checked = timerEnabled;
+        timerSecondsRow.classList.toggle('hidden', !timerEnabled);
+        timerManualRow.classList.toggle('hidden', !timerEnabled);
+        tsCountEl.textContent = timerSeconds;
+        timerManualToggle.checked = timerManualStart;
+        themeToggle.checked = lightTheme;
+        document.body.classList.toggle('light-theme', lightTheme);
+
+        rebuildDeck();
+        renderList();
+        renderCounter();
+        persist();
+        alert('Import erfolgreich: ' + questions.length + ' Fragen geladen.');
+      } catch (err) {
+        alert('Die Datei konnte nicht gelesen werden. Ist es eine gültige Fragenstapel-Sicherung?');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function toggleExcluded(id, excluded) {
+    const q = questions.find(x => x.id === id);
+    if (!q) return;
+    q.excluded = excluded;
+    rebuildDeck();
+    renderList();
+    renderCounter();
+    persist();
+  }
+
+  function removeQuestion(id) {
+    questions = questions.filter(q => q.id !== id);
+    deck = deck.filter(d => d !== id);
+    renderList();
+    renderCounter();
+    persist();
+  }
+
+  function drawCard() {
+    ensureAudioCtx(); // innerhalb der Nutzer-Interaktion "aufwärmen", damit der Ton später zuverlässig spielt
+    if (deck.length === 0) {
+      rebuildDeck();
+      if (deck.length === 0) {
+        qnumEl.textContent = 'Stapel leer';
+        qtextEl.textContent = 'Alle Fragen wurden gespielt. Fügt neue hinzu oder mischt neu.';
+        hintEl.textContent = '';
+        qcategoryEl.textContent = '';
+        scaleBadgeEl.classList.add('hidden');
+        skipBtn.classList.add('hidden');
+        stopTimer();
+        timerStartBtn.classList.add('hidden');
+        return;
+      }
+    }
+    cardEl.classList.add('flipping');
+    setTimeout(() => {
+      const id = deck.pop();
+      drawCount++;
+      drawNumEl.textContent = drawCount;
+      if (typeof id === 'string' && id.startsWith('wildcard-')) {
+        usedWildcards++;
+        qcategoryEl.textContent = 'Wildcard';
+        qnumEl.textContent = '';
+        qtextEl.textContent = 'Blankokarte! Denkt euch gemeinsam eine eigene Frage aus.';
+        hintEl.textContent = 'Antwort geheim auf euer Täfelchen notieren';
+        scaleBadgeEl.classList.add('hidden');
+        addHistoryEntry({ text: 'Blankokarte', category: 'Wildcard', isWildcard: true, drawNum: drawCount });
+      } else {
+        const q = questions.find(x => x.id === id);
+        q.used = true;
+        qcategoryEl.textContent = q.category || '';
+        qnumEl.textContent = '';
+        qtextEl.textContent = q.text;
+        hintEl.textContent = 'Antwort geheim auf euer Täfelchen notieren';
+        scaleBadgeEl.classList.toggle('hidden', q.scale !== '0-100');
+        addHistoryEntry({ text: q.text, category: q.category || '', isWildcard: false, drawNum: drawCount });
+      }
+      cardEl.classList.remove('flipping');
+      skipBtn.classList.remove('hidden');
+      applyTimerForNewCard();
+      renderCounter();
+      renderList();
+      persist();
+    }, 180);
+  }
+
+  function resetAll() {
+    questions.forEach(q => q.used = false);
+    drawCount = 0;
+    drawNumEl.textContent = '1';
+    qcategoryEl.textContent = '';
+    qnumEl.textContent = 'Bereit?';
+    qtextEl.textContent = 'Tippt auf „Ziehen“, um zu starten.';
+    hintEl.textContent = 'Antwort geheim auf euer Täfelchen notieren';
+    scaleBadgeEl.classList.add('hidden');
+    skipBtn.classList.add('hidden');
+    stopTimer();
+    timerStartBtn.classList.add('hidden');
+    history = [];
+    renderHistory();
+    rebuildDeck();
+    renderCounter();
+    renderList();
+    persist();
+  }
+
+  function addQuestion() {
+    const text = newQInput.value.trim();
+    if (!text) return;
+    const catInput = newQCatInput.value.trim();
+    const category = catInput || 'Eigene Frage';
+    const id = 'custom-' + Date.now();
+    questions.push({ id, text, scale: 'frei', category, used: false, excluded: false });
+    deck.unshift(id);
+    newQInput.value = '';
+    newQCatInput.value = '';
+    renderList();
+    renderCounter();
+    persist();
+  }
+
+  const manageBtn = document.getElementById('manageBtn');
+  const manageOverlay = document.getElementById('manageOverlay');
+  const manageClose = document.getElementById('manageClose');
+  manageBtn.addEventListener('click', () => manageOverlay.classList.add('open'));
+  manageClose.addEventListener('click', () => manageOverlay.classList.remove('open'));
+  manageOverlay.addEventListener('click', (e) => { if (e.target === manageOverlay) manageOverlay.classList.remove('open'); });
+
+  const rulesBtn = document.getElementById('rulesBtn');
+  const rulesOverlay = document.getElementById('rulesOverlay');
+  const rulesClose = document.getElementById('rulesClose');
+  rulesBtn.addEventListener('click', () => rulesOverlay.classList.add('open'));
+  rulesClose.addEventListener('click', () => rulesOverlay.classList.remove('open'));
+  rulesOverlay.addEventListener('click', (e) => { if (e.target === rulesOverlay) rulesOverlay.classList.remove('open'); });
+
+  drawBtn.addEventListener('click', drawCard);
+  shuffleBtn.addEventListener('click', resetAll);
+  cardEl.addEventListener('click', drawCard);
+  skipBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // sonst würde der Tap zusätzlich noch die Karte selbst zum Ziehen bringen
+    drawCard();
+  });
+  addBtn.addEventListener('click', addQuestion);
+  newQInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addQuestion(); });
+  newQCatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addQuestion(); });
+
+  // --- Vollbildmodus: Karte wird ins Overlay verschoben, echtes Browser-Vollbild wird angefragt ---
+  const fsBtn = document.getElementById('fsBtn');
+  const fsOverlay = document.getElementById('fsOverlay');
+  const fsExit = document.getElementById('fsExit');
+  const fsStage = document.getElementById('fsStage');
+  const stackWrap = document.getElementById('stackWrap');
+  const appOriginalParent = stackWrap.parentNode;
+  const appOriginalNextSibling = stackWrap.nextSibling;
+
+  function requestRealFullscreen() {
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+    if (req) {
+      try { req.call(el); } catch (e) { /* Vollbild-API nicht verfügbar — Overlay läuft trotzdem */ }
+    }
+  }
+
+  function exitRealFullscreen() {
+    const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    if (!isFs) return;
+    const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exit) {
+      try { exit.call(document); } catch (e) { /* ignorieren */ }
+    }
+  }
+
+  function enterFsMode() {
+    fsStage.appendChild(stackWrap);
+    fsOverlay.classList.add('active');
+    requestRealFullscreen();
+  }
+
+  function exitFsMode() {
+    if (appOriginalNextSibling) {
+      appOriginalParent.insertBefore(stackWrap, appOriginalNextSibling);
+    } else {
+      appOriginalParent.appendChild(stackWrap);
+    }
+    fsOverlay.classList.remove('active');
+    exitRealFullscreen();
+  }
+
+  fsBtn.addEventListener('click', enterFsMode);
+  fsExit.addEventListener('click', exitFsMode);
+
+  // Falls das System-Vollbild z. B. per Zurück-Geste verlassen wird, Overlay mit schließen
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+    document.addEventListener(evt, () => {
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      if (!isFs && fsOverlay.classList.contains('active')) {
+        exitFsMode();
+      }
+    });
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    searchTerm = e.target.value;
+    renderList();
+  });
+
+  wildcardToggle.addEventListener('change', () => {
+    wildcardEnabled = wildcardToggle.checked;
+    wildcardCountRow.classList.toggle('hidden', !wildcardEnabled);
+    rebuildDeck();
+    renderCounter();
+    persist();
+  });
+
+  wcMinus.addEventListener('click', () => {
+    wildcardCount = Math.max(0, wildcardCount - 1);
+    wcCountEl.textContent = wildcardCount;
+    rebuildDeck();
+    renderCounter();
+    persist();
+  });
+
+  wcPlus.addEventListener('click', () => {
+    wildcardCount = Math.min(20, wildcardCount + 1);
+    wcCountEl.textContent = wildcardCount;
+    rebuildDeck();
+    renderCounter();
+    persist();
+  });
+
+  timerToggle.addEventListener('change', () => {
+    timerEnabled = timerToggle.checked;
+    timerSecondsRow.classList.toggle('hidden', !timerEnabled);
+    timerManualRow.classList.toggle('hidden', !timerEnabled);
+    if (!timerEnabled) { stopTimer(); timerStartBtn.classList.add('hidden'); }
+    persist();
+  });
+
+  tsMinus.addEventListener('click', () => {
+    timerSeconds = Math.max(10, timerSeconds - 5);
+    tsCountEl.textContent = timerSeconds;
+    persist();
+  });
+
+  tsPlus.addEventListener('click', () => {
+    timerSeconds = Math.min(180, timerSeconds + 5);
+    tsCountEl.textContent = timerSeconds;
+    persist();
+  });
+
+  timerManualToggle.addEventListener('change', () => {
+    timerManualStart = timerManualToggle.checked;
+    persist();
+  });
+
+  timerStartBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // verhindert, dass der Tap zusätzlich die nächste Karte zieht
+    startTimer();
+  });
+
+  themeToggle.addEventListener('change', () => {
+    lightTheme = themeToggle.checked;
+    document.body.classList.toggle('light-theme', lightTheme);
+    persist();
+  });
+
+  historyClearBtn.addEventListener('click', clearHistory);
+
+  qlistToggle.addEventListener('click', () => {
+    const isOpen = !qlistBody.classList.contains('hidden');
+    qlistBody.classList.toggle('hidden', isOpen);
+    qlistToggle.classList.toggle('open', !isOpen);
+  });
+
+  exportBtn.addEventListener('click', exportData);
+  importBtn.addEventListener('click', () => importFileInput.click());
+  importFileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) importData(file);
+    importFileInput.value = '';
+  });
+
+  load();
+})();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => { /* z. B. bei file:// nicht verfügbar — App funktioniert trotzdem */ });
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+services:
+  fragenstapel:
+    image: ghcr.io/erdnaskram/game-ff-fragenstapel:latest
+    pull_policy: always
+    container_name: game-fragenstapel
+    ports:
+      - "4269:80"
+    restart: unless-stopped
