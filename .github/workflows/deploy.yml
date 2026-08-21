@@ -31,5 +31,3 @@ jobs:
           push: true
           tags: ${{ env.IMAGE }}:latest
 
-      - name: Trigger Portainer redeploy
-        run: curl -s -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
