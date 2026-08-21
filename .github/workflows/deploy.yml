@@ -38,3 +38,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.IMAGE }}:latest
 
+      - name: Trigger Portainer redeploy
+        if: ${{ secrets.PORTAINER_WEBHOOK_URL != '' }}
+        run: curl -s -X POST "${{ secrets.PORTAINER_WEBHOOK_URL }}"
